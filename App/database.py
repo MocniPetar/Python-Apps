@@ -127,7 +127,7 @@ class save_to_database:
                                 ); """
         
         if conn != None:
-            save_to_database.create_table(conn, sql_phonebook)
+            save_to_database.create_table(conn, sql_tasks)
         else:
                 print("Error! No connection with database.")
         

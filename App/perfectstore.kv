@@ -341,17 +341,6 @@
                     on_release: app.callback("S")
                     elevation: 3
 
-            #BoxLayout:
-            #    id: FadeBackground
-            #    size_hint: "1sp", "1sp"
-
-            #    canvas:
-            #        Color:
-            #            rgba: 1,1,1,0
-            #        Rectangle:
-            #            pos: self.pos
-            #            size: self.size
-
         MDBottomNavigationItem:
             name: "Bills"
             text: 'Bills'
@@ -618,3 +607,41 @@
             Rectangle:
                 pos: self.pos
                 size: self.size
+
+<BillItem>:
+
+    MDFloatLayout:
+        size_hint: 1, 1
+
+        MDTextFieldRect:
+            id: ItemField
+            hint_text: "Item"
+            font_size: 18
+            pos_hint: {'center_x': .17, 'center_y': 1}
+            size_hint: None, None
+            width: 90
+            height: 50
+            halign: 'center'
+            padding_y: [13,]
+
+        MDTextFieldRect:
+            id: AmountField
+            hint_text: "XXX"
+            font_size: 18
+            pos_hint: {'center_x': .5, 'center_y': 1}
+            size_hint: None,None
+            width: 90
+            height: 50
+            halign: 'center'
+            padding_y: [13,]
+
+        MDTextFieldRect:
+            id: PriceField
+            hint_text: "XXXEU"
+            font_size: 18
+            pos_hint: {'center_x': .83, 'center_y': 1}
+            size_hint: None, None
+            width: 90
+            height: 50
+            halign: 'center'
+            padding_y: [13,]

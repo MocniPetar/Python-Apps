@@ -3,14 +3,13 @@ kivy.require("2.1.0")
 
 from kivymd.app import MDApp
 from kivy.utils import platform
-from kivy.uix.widget import Widget
 from kivy.uix.screenmanager import ScreenManager, NoTransition
 from kivymd.uix.screen import MDScreen
 from kivy.core.window import Window
 from kivymd.uix.list import TwoLineIconListItem, IconLeftWidget
 from kivymd.uix.card import MDCard
-from kivymd.uix.button import MDFlatButton, MDIconButton
-from kivymd.uix.textfield import MDTextField
+from kivymd.uix.button import MDFlatButton, MDIconButton, MDRaisedButton
+from kivymd.uix.textfield import MDTextField, MDTextFieldRect
 from kivymd.uix.floatlayout import MDFloatLayout
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.menu import MDDropdownMenu
@@ -21,6 +20,7 @@ from kivymd.uix.snackbar import Snackbar
 from database import save_to_database
 from ItemsDatabase import items_database
 from kivymd.uix.scrollview import MDScrollView
+from kivymd.uix.list import MDList
 from kivy.graphics import *
 
 ##Mail##
@@ -197,6 +197,10 @@ class MainScreen(MDScreen):
 class FadeCard(MDBoxLayout):
     def __init__(self, **kwargs):
         super(FadeCard, self).__init__(**kwargs)
+
+class BillItem(MDBoxLayout):
+    def __init__(self, *args, **kwargs):
+        super(BillItem, self).__init__(*args, **kwargs)
                   
 class PerfectStoreApp(MDApp):
 
@@ -222,8 +226,14 @@ class PerfectStoreApp(MDApp):
     #Data for creating a bill
     card = None
     textField_1 = None
-    textField_2 = None
-    textInput_3 = None
+    yearTextField = None
+    monthTextField = None
+    dayTextField = None
+    itemAmountTextField = None
+    billListWidget = None
+    BillItemList = []
+    listOfItemsOnBill = None
+    layoutOfCard = None
     
     #Amount sold screen data
     totalProfit = 0
@@ -428,59 +438,152 @@ class PerfectStoreApp(MDApp):
                 self.theme_cls.theme_style = "Light"
                 self.theme_cls.primary_palette = "Blue"
         
+    def sizeOfList(self, instance):
+
+            if self.itemAmountTextField.text != '':
+
+                if self.itemAmountTextField.text.isdigit():
+
+                    if self.listOfItemsOnBill != None:
+                        if self.BillItemList != []:
+                            for i in self.BillItemList:
+                                self.listOfItemsOnBill.remove_widget(i)
+                    
+                        self.BillItemList = []
+
+                    size = int(self.itemAmountTextField.text)
+                    self.listOfItemsOnBill = MDList(
+                        spacing = 60
+                    )
+
+                    if size > 0:
+
+                        for i in range(0,size):
+                            self.BillItemList.append(BillItem())
+
+                        for i in self.BillItemList:
+                            self.listOfItemsOnBill.add_widget(i)
+
+                    self.billListWidget = MDScrollView(
+                        self.listOfItemsOnBill,
+                        do_scroll_x = False,
+                        size_hint_y = None,
+                        size_hint_x = None, # Sets the size hint of the x and y to None
+                        height = 180,
+                        width = 300,
+                        pos_hint = {'center_x': .52, 'center_y': .3}
+                    )
+
+                    self.layoutOfCard.add_widget(self.billListWidget)
+
+                else:
+                    return
+            else:
+                return
+        
     def CreateBillPopUp(self):
         
         self.textField_1 = MDTextField(
             hint_text = "Bill Name:",
             helper_text = "Max. Num. of characters is 12",
             helper_text_mode = "persistent",
-            font_size = 25,
+            font_size = 20,
             size_hint_x = .8,
-            pos_hint = {'center_x': .5,'center_y': .9},
+            pos_hint = {'center_x': .5,'center_y': .87}
+        )
+
+        self.yearTextField = MDTextFieldRect(
+            hint_text = "YYYY",
+            font_size = 20,
+            size_hint_x = .17,
+            size_hint_y = .1,
+            pos_hint = {'center_x': .22, 'center_y': .67},
+            halign = 'center',
+            padding = [10,]
+        )
+
+        self.monthTextField = MDTextFieldRect(
+            hint_text = "MM",
+            font_size = 20,
+            size_hint_x = .17,
+            size_hint_y = .1,
+            pos_hint = {'center_x': .5, 'center_y': .67},
+            halign = 'center',
+            padding = [10,]
         )
         
-        self.textField_2 = MDTextField(
-            hint_text = "Date:",
-            helper_text = "YYYY-MM-DD",
-            helper_text_mode = "persistent",
-            font_size = 25,
-            size_hint_x = .8,
-            pos_hint = {'center_x': .5,'center_y': .72},
+        self.dayTextField = MDTextFieldRect(
+            hint_text = "DD",
+            font_size = 20,
+            size_hint_x = .17,
+            size_hint_y = .1,
+            pos_hint = {'center_x': .78, 'center_y': .67},
+            halign = 'center',
+            padding = [10,]
         )
-        
-        self.textInput_3 = TextInput(
-            hint_text = "Items",
-            font_size = 30,
-            size_hint = (.8, .5),
-            pos_hint = {'center_x': .5,'center_y': .35},
-            multiline = True,
-            background_color = (0,0,0,0),
+
+        self.itemAmountTextField = MDTextFieldRect(
+            hint_text = "XXX",
+            font_size = 18,
+            size_hint = (.18, .1),
+            pos_hint = {'center_x': .51, 'center_y': .55},
+            halign = 'center',
+            padding = [10,]
         )
-        
-        self.card = MDCard(
-            MDFloatLayout(
-                self.textField_1,
-                self.textField_2,
-                self.textInput_3,
-                MDFlatButton(
-                    text = "OK",
-                    size_hint = (.2, .2),
-                    pos_hint = {'center_x': 0.85,'center_y': 0.15},
-                    on_release = self.AddBill,
-                ),
-                MDFlatButton(
-                    text = "CANCEL",
-                    size_hint = (.2, .2),
-                    pos_hint = {'center_x': 0.6,'center_y': 0.15},
-                    on_release = self.Cancel,
-                )
+
+        self.layoutOfCard = MDFloatLayout(
+            self.textField_1,
+            self.yearTextField,
+            self.monthTextField,
+            self.dayTextField,
+            self.itemAmountTextField,
+            MDLabel(
+                markup = True,
+                text = "[b][color=000000]Num. of Items[/b]",
+                font_style = 'Body2',
+                pos_hint = {'center_x': .54,'center_y': .55},
             ),
-            orientation = 'vertical',
-            size_hint = (.8, .4),
+            MDRaisedButton(
+                markup = True,
+                text = "[b][color=000000]Enter[/b]",
+                size_hint = (None, None),
+                height = 18,
+                width = 8,
+                pos_hint = {'center_x': .75,'center_y': .55},
+                on_release = self.sizeOfList
+            ),
+            MDFlatButton(
+                text = "OK",
+                size_hint = (None, None),
+                width = 100,
+                height = 50,
+                pos_hint = {'center_x': .85,'center_y': .1},
+                on_release = self.AddBill,
+            ),
+            MDFlatButton(
+                text = "CANCEL",
+                size_hint = (None, None),
+                width = 100,
+                height = 50,
+                pos_hint = {'center_x': .6,'center_y': .1},
+                on_release = self.Cancel,
+            )
+        )
+
+        # IMPLEMENT A WAY TO HAVE A LIST OF MDTextFieldRect's FOR ENTERING NAMES,AMOUNT AND PRICES OF ITEMS IN A LIST INSIDE A SCROLL VIEW
+        # UPDATED: The MDTextFieldRect's are now interactible and in the desired size. The problem that the size of the MDScrollView or
+        # MDBoxLayout is not correct. It doesn't work for now. Make it work!!
+
+        self.card = MDCard(
+            self.layoutOfCard,
+            size_hint = (None, None),
+            width = 525,
+            height = 575,
             pos_hint = {'center_x': 0.5,'center_y': 0.5},
             elevation = 4,
-            radius = [20],
+            radius = [20]
         )
+
         self.sm.get_screen('main').add_widget(self.FadeCardInstance)
         self.sm.get_screen('main').ids.SelectItem.disabled = True
         self.sm.get_screen('main').ids.printAll.disabled = True
@@ -490,18 +593,38 @@ class PerfectStoreApp(MDApp):
         self.sm.get_screen('main').ids.BillScrollView.disabled = True
         self.sm.get_screen('main').add_widget(self.card)
     
-    def checkDate(self, date, lastDate):
+    def checkDate(self, lastDate):
 
-        if int(date[0]) <= int(lastDate[0]):
-            if int(date[1]) <= int(lastDate[1]):
-                if int(date[2]) <= int(lastDate[2]):
-                    return True
+        # 0 -> the date si fine
+        # 1 -> the date is older then the last
+        # 2 -> the date is not entered correctly
+    
+        for i in self.yearTextField.text:
+            if i.isdigit() == False:
+                return 2
+            
+        for i in self.monthTextField.text:
+            if i.isdigit() == False:
+                return 2
+            
+        for i in self.dayTextField.text:
+            if i.isdigit() == False:
+                return 2
+            
+        if int(self.yearTextField.text) < int(lastDate[0]):
+            return 1
+        elif int(self.yearTextField.text) == int(lastDate[0]):
+            if int(self.monthTextField.text) < int(lastDate[1]):
+                return 1
+            elif int(self.monthTextField.text) == int(lastDate[1]):
+                if int(self.dayTextField.text) < int(lastDate[2]):
+                    return 1
                 else:
-                    return False
+                    return 0
             else:
-                return False   
+                return 0
         else:
-            return False
+            return 0
             
     def checkStorage(self, ID, amount):
 
@@ -515,102 +638,66 @@ class PerfectStoreApp(MDApp):
 
         newAmount = InfoFromStorage - amountToInt
         if newAmount < 0:
-
             conn.close()
             return False
+        
         else: 
-
             with conn:
                 items_database.update_amount(conn, (newAmount,ID))
 
             conn.close()
             return True
 
-
     def AddBill(self, obj):
 
-        if len(self.textField_1.text) == 0 or len(self.textField_2.text) == 0 or len(self.textInput_3.text) == 0:
+        DATE = True
+        numOfMonthsAndDays = True
+        ITEMS = True
+
+        if len(self.yearTextField.text) == 0 or len(self.monthTextField.text) == 0 or len(self.dayTextField.text) == 0:
+            DATE = False
+
+        if int(self.monthTextField.text) > 12 or int(self.dayTextField.text) > 31:
+            numOfMonthsAndDays = False
+
+        for i in self.BillItemList:
+            if i.ids.ItemField.text == '' or i.ids.AmountField.text == '' or i.ids.PriceField.text == '':
+                ITEMS = False
+
+        if len(self.textField_1.text) == 0 or ITEMS == False or DATE == False:
             Snackbar(text="Please fill in every text field!", snackbar_x=10, snackbar_y=10, size_hint_y=.08,
                      size_hint_x=(Window.width - (10 * 2)) / Window.width, bg_color=(0, 153/250, 1, 255/250)).open()
+            
+        elif numOfMonthsAndDays == False:
+            Snackbar(text="Month > 12 or Day > 31!", snackbar_x=10, snackbar_y=10, size_hint_y=.08,
+                     size_hint_x=(Window.width - (10 * 2)) / Window.width, bg_color=(0, 153/250, 1, 255/250)).open()
+            
         else:
-            count = 1
-            state = True
-            PastDate = False
+            PastDate = 0
             billNum = 0
             lastBillNum = -1
-            date = ["","",""]
             lastDate = ["","",""]
             index = 0
-            itemName = ""
-            itemPrice = ""
-            listOfItemNames = []
-            listOfItemPrices = []
             itemsExists = True
             IsInStorage = True
 
-            for i in self.textInput_3.text:
-                if i != " " and i != "\n":
-                    if i.isdigit() == False:
-                        if i != ".":
-                            itemName += i
-                        else:
-                            itemPrice += i
-                    else:
-                        itemPrice += i
-                else:
-                    count += 1
-                    if itemName != "":
-                        listOfItemNames.append(itemName)
-                        itemName = ""
+            for i in self.itemsFromDatabase:
 
-                    if itemPrice != "":
-                        listOfItemPrices.append(itemPrice)
-                        itemPrice = ""
+                #   i[1] --> Name of item
+                #   i[2] --> Price of item
 
-            if itemPrice != []:
-                listOfItemPrices.append(itemPrice)
+                if self.BillItemList[index].ids.ItemField.text == i[1] and self.BillItemList[index].ids.PriceField.text == i[2]:
+                    
+                    IsInStorage = self.checkStorage(i[0], self.BillItemList[index].ids.AmountField.text)
 
-            if (count%3) == 0:
-
-                listOfItemNames.sort()
-                price = []
-                amount = []
-                priceIndex = 0
-
-                for i in range(0,len(listOfItemPrices)):
-                    if (i%2) != 0:
-                        price.append(listOfItemPrices[i])
-                    else:
-                        amount.append(listOfItemPrices[i])
-
-                for i in self.itemsFromDatabase:
-                    if i[1] == listOfItemNames[index]:
-
-                        if i[2] == price[index]:
-                            itemsExists = True
-
-                        IsInStorage = self.checkStorage(i[0], amount[index])
-
-                        index += 1
-
-                        if index == len(listOfItemNames):
-                            break
-                    else:
-                        itemsExists = False
-
-                listOfItemNames.clear()
-                listOfItemPrices.clear()
-                price.clear()
-
-            index = 0
-
-            for i in self.textField_2.text:
-                if i.isdigit() == False:
-                    if i != '-' and i != '\n':
-                        state = False
+                    itemsExists = True
                     index += 1
+
                 else:
-                    date[index] += i
+                    itemsExists = False
+                
+                if index >= len(self.BillItemList):
+                    break
 
             if self.Bill != []:
 
@@ -630,59 +717,63 @@ class PerfectStoreApp(MDApp):
                     else:
                         lastDate[index] += i
 
-                PastDate = self.checkDate(date,lastDate)
+                PastDate = self.checkDate(lastDate)
 
             if billNum <= lastBillNum:
                 Snackbar(text="Bill number ID has to be bigger!", snackbar_x=10, snackbar_y=10, size_hint_y=.08,
                         size_hint_x=(Window.width - (10 * 2)) / Window.width, bg_color=(0, 153/250, 1, 255/250)).open()
-            elif state == False:
-                Snackbar(text="Incorrect date format!", snackbar_x=10, snackbar_y=10, size_hint_y=.08,
-                         size_hint_x=(Window.width - (10 * 2)) / Window.width, bg_color=(0, 153/250, 1, 255/250)).open()
-            elif PastDate == True:
+                
+            elif PastDate == 1:
                 Snackbar(text="The entered date is before the previous bill date!", snackbar_x=10, snackbar_y=10, size_hint_y=.08,
                         size_hint_x=(Window.width - (10 * 2)) / Window.width, bg_color=(0, 153/250, 1, 255/250)).open()
+                
+            elif PastDate == 2:
+                Snackbar(text="The entered date is not typed correctly!", snackbar_x=10, snackbar_y=10, size_hint_y=.08,
+                        size_hint_x=(Window.width - (10 * 2)) / Window.width, bg_color=(0, 153/250, 1, 255/250)).open()
+                
             elif len(self.textField_1.text) > 12:
                 Snackbar(text="Name of the bill exceeded 12 characters!", snackbar_x=10, snackbar_y=10, size_hint_y=.08,
                          size_hint_x=(Window.width - (10 * 2)) / Window.width, bg_color=(0, 153/250, 1, 255/250)).open()
+
             elif itemsExists == False:
                 Snackbar(text="The item or an items price doesn't exist in the database!", snackbar_x=10, snackbar_y=10, size_hint_y=.08,
                          size_hint_x=(Window.width - (10 * 2)) / Window.width, bg_color=(0, 153/250, 1, 255/250)).open()
-            elif (count%3) != 0:
-                Snackbar(text="Missing item information!", snackbar_x=10, snackbar_y=10, size_hint_y=.08,
-                         size_hint_x=(Window.width - (10 * 2)) / Window.width, bg_color=(0, 153/250, 1, 255/250)).open()
+                
             elif IsInStorage == False:
                 Snackbar(text="Items on the bill are NOT in stock!", snackbar_x=10, snackbar_y=10, size_hint_y=.08,
                          size_hint_x=(Window.width - (10 * 2)) / Window.width, bg_color=(0, 153/250, 1, 255/250)).open()
+                
             else:
                 items = []
                 string_list = []
                 string = ""
                 dic = {'Name' : "", 'Date' : "", 'Items' : []}
+                dateString = str(self.yearTextField.text + "-" + self.monthTextField.text + "-" + self.dayTextField.text)
 
                 dic['Name'] = str(self.textField_1.text)
-                dic['Date'] = str(self.textField_2.text + "\n")
+                dic['Date'] = str(self.yearTextField.text + "-" + self.monthTextField.text + "-" + self.dayTextField.text + "\n")
 
                 database = r"database.db"
                 conn = save_to_database.create_connection(database)
 
                 string = ""
-                item = ""
                 listOfItemInfo = []
-                for i in self.textInput_3.text.splitlines():
-                    items.append(str(i)+"\n")
-                    item = items[-1:][0]
-                    for x in item:
+                for i in self.BillItemList:
+                    
+                    listOfItemInfo.append(i.ids.ItemField.text)
+                    listOfItemInfo.append(i.ids.AmountField.text)
+                    listOfItemInfo.append(i.ids.PriceField.text)
+                    
+                    ItemInALine = i.ids.ItemField.text + " " + i.ids.AmountField.text + " " + i.ids.PriceField.text + "\n"
 
-                        if x != " " and x != "\n":
-                            string += x
-                        else:
-                            listOfItemInfo.append(string)
-                            string = ""
+                    items.append(ItemInALine)
+
                     with conn:
-                        bill = (self.textField_1.text, self.textField_2.text, str(listOfItemInfo[0]), str(listOfItemInfo[1]), str(listOfItemInfo[2]))
+                        bill = (self.textField_1.text, dateString, str(listOfItemInfo[0]), str(listOfItemInfo[1]), str(listOfItemInfo[2]))
                         bill_id = save_to_database.create_bills(conn, bill)
 
                     listOfItemInfo.clear()
+
                 dic['Items'] = items
                 self.Bill.append(dic)
 
@@ -724,7 +815,6 @@ class PerfectStoreApp(MDApp):
 
                 self.sm.get_screen('main').remove_widget(self.card)
                 self.sm.get_screen('main').remove_widget(self.FadeCardInstance)
-                #self.FadeCardInstance = None
                 self.sm.get_screen('main').ids.SelectItem.disabled = False
                 self.sm.get_screen('main').ids.printAll.disabled = False
                 self.sm.get_screen('main').ids.Clearcard.disabled = False
